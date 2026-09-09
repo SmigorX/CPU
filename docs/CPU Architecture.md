@@ -24,17 +24,6 @@
 
 ### ALU
 - 1 ALU
-#### Supports:
-- ADD 
-- SUB 
-- CMP - Like SUB but discards the result, just the flags
-- AND 
-- OR  
-- XOR 
-- NOT
-- MUL
-- DIV
-- DIVU - Like DIV but for unsigned
 
 ### SHIFTER
 - SHL - Shift left 
