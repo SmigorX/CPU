@@ -46,18 +46,20 @@ Only `CMP` writes to `FLAGS` in this table — no other instruction does, despit
 
 Only `CMPI` writes to `FLAGS` in this table — `ADDI`/`ANDI`/`ORI`/`XORI`/`SHLI`/`SHRI`/`SHRIU`/`LOAD`/`STORE` do not.
 
+**`imm` is interpreted as signed or unsigned depending on the instruction** — it's only 4 (or 6) bits and has to be widened to 16 before use. Arithmetic values (`ADDI`/`CMPI`/`LOAD`/`STORE`) treat `imm` as **signed**. Raw bit patterns (`ANDI`/`ORI`/`XORI`) and shift counts (`SHLI`/`SHRI`/`SHRIU`) treat it as **unsigned**. This is separate from the shift *result's* fill behavior (arithmetic vs. logical).
+
 | subop | Mnemonic | Operands | Semantics |
 | --- | --- | --- | --- |
-| 0000 | `ADDI` | rd, rs1, imm | rd = rs1 + imm |
-| 0001 | `ANDI` | rd, rs1, imm | rd = rs1 & imm |
-| 0010 | `ORI` | rd, rs1, imm | rd = rs1 \| imm |
-| 0011 | `XORI` | rd, rs1, imm | rd = rs1 ^ imm |
-| 0100 | `SHLI` | rd, rs1, imm | rd = rs1 << imm |
-| 0101 | `SHRI` | rd, rs1, imm | rd = rs1 >> imm (arithmetic — sign-extends, for signed values) |
-| 0110 | `SHRIU` | rd, rs1, imm | rd = rs1 >> imm (logical — zero-fills, for unsigned values) |
-| 0111 | `LOAD` | rd, rs1, imm | rd = mem[rs1 + imm]. rs1 ∈ {R6, R7} only (1 bit), imm is 6 bits. |
-| 1000 | `STORE` | rd, rs1, imm | mem[rs1 + imm] = rd (rd field reused as source reg here). rs1 ∈ {R6, R7} only (1 bit), imm is 6 bits. |
-| 1001 | `CMPI` | rs1, imm | flags = rs1 − imm |
+| 0000 | `ADDI` | rd, rs1, imm | rd = rs1 + imm (`imm` signed) |
+| 0001 | `ANDI` | rd, rs1, imm | rd = rs1 & imm (`imm` unsigned — a raw bit pattern) |
+| 0010 | `ORI` | rd, rs1, imm | rd = rs1 \| imm (`imm` unsigned) |
+| 0011 | `XORI` | rd, rs1, imm | rd = rs1 ^ imm (`imm` unsigned) |
+| 0100 | `SHLI` | rd, rs1, imm | rd = rs1 << imm (`imm` unsigned — a raw 0–15 shift count) |
+| 0101 | `SHRI` | rd, rs1, imm | rd = rs1 >> imm, **arithmetic** result (sign-extends, per `rs1`'s sign bit). `imm` itself is unsigned — a raw 0–15 shift count. |
+| 0110 | `SHRIU` | rd, rs1, imm | rd = rs1 >> imm, **logical** result (zero-fills). `imm` itself is unsigned — a raw 0–15 shift count. |
+| 0111 | `LOAD` | rd, rs1, imm | rd = mem[rs1 + imm] (`imm` signed). rs1 ∈ {R6, R7} only (1 bit), imm is 6 bits. |
+| 1000 | `STORE` | rd, rs1, imm | mem[rs1 + imm] = rd (rd field reused as source reg here) (`imm` signed). rs1 ∈ {R6, R7} only (1 bit), imm is 6 bits. |
+| 1001 | `CMPI` | rs1, imm | flags = rs1 − imm (`imm` signed) |
 | others | — | | reserved |
 
 ### B-type (`class = 10`) — conditional branch, `PC += offset` if condition true
@@ -85,8 +87,8 @@ Only `CMPI` writes to `FLAGS` in this table — `ADDI`/`ANDI`/`ORI`/`XORI`/`SHLI
 | --- | --- | --- | --- |
 | 0000 | `JMP` | offset | PC += offset |
 | 0001 | `JMPA` | rs1 | PC = rs1 |
-| 0010 | `CALL` | offset | SP -= 1; mem[SP] = PC+1; PC += offset |
-| 0011 | `CALLA` | rs1 | SP -= 1; mem[SP] = PC+1; PC = rs1 |
+| 0010 | `CALL` | offset | SP -= 1; mem[SP] = PC; PC += offset |
+| 0011 | `CALLA` | rs1 | SP -= 1; mem[SP] = PC; PC = rs1 |
 | 0100 | `RET` | — | PC = mem[SP]; SP += 1 |
 | 1111 | `HALT` | — | Stop execution |
 | 1110 | `NOP` | — | No-op |
