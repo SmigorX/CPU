@@ -16,11 +16,11 @@ class ALU:
         neg_a, neg_b = bool(ALU._sign(a)), bool(ALU._sign(b))
         mag_a = ALU._negate(a) if neg_a else a
         mag_b = ALU._negate(b) if neg_b else b
-        q, r = divmod(mag_a, mag_b)        
+        q, r = divmod(mag_a, mag_b)
         if neg_a != neg_b:
             q = ALU._negate(q)
         if neg_a:
-            r = ALU._negate(r)              
+            r = ALU._negate(r)
         return q & 0xFFFF, r & 0xFFFF
 
     @staticmethod
@@ -36,9 +36,9 @@ class ALU:
         result = ALU.sub(a, b)
         sa, sb, sr = ALU._sign(a), ALU._sign(b), ALU._sign(result)
         z = result == 0
-        c = a >= b                          
+        c = a >= b
         n = bool(sr)
-        v = (sa != sb) and (sr != sa)       
+        v = (sa != sb) and (sr != sa)
         return z, c, n, v
 
     @staticmethod

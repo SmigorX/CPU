@@ -1,4 +1,4 @@
-class cpu_register():
+class cpu_register:
     def __init__(self):
         self.value = 0
 
@@ -8,7 +8,8 @@ class cpu_register():
     def read(self):
         return self.value
 
-class flags_register():
+
+class flags_register:
     def __init__(self):
         self.z = False
         self.c = False
@@ -22,7 +23,7 @@ class flags_register():
         self.z, self.c, self.n, self.v = z, c, n, v
 
     def set_list(self, flag_vecor: tuple[bool, bool, bool, bool]):
-        self.set(flag_vecor[0], flag_vecor[1], flag_vecor[2], flag_vecor[3]) 
+        self.set(flag_vecor[0], flag_vecor[1], flag_vecor[2], flag_vecor[3])
 
     def read_z(self) -> bool:
         return self.z
@@ -42,7 +43,8 @@ class flags_register():
         """
         return (self.z, self.c, self.n, self.v)
 
-class program_counter():
+
+class program_counter:
     def __init__(self, start: int = 0x0000):
         self.value = start
 
@@ -64,8 +66,11 @@ class program_counter():
     def back_by(self, value: int):
         self.value = (self.value - value) & 0xFFFF
 
-class stack_pointer():
-    def __init__(self, start: int = 0xFFFB): # Leaves space for IO at the top of the memory
+
+class stack_pointer:
+    def __init__(
+        self, start: int = 0xFFFB
+    ):  # Leaves space for IO at the top of the memory
         self.value = start
 
     def step(self):

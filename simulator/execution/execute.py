@@ -1,12 +1,20 @@
 from __future__ import annotations
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from cpu_architecture.cpu import CPU
 
-from execution.builder import *
-from execution.optcode import RTypeSuboperands, ITypeSuboperands, BTypeSuboperands, JTypeSuboperands
 import os
+
+from execution.builder import *
+from execution.optcode import (
+    BTypeSuboperands,
+    ITypeSuboperands,
+    JTypeSuboperands,
+    RTypeSuboperands,
+)
+
 
 class Dispatcher:
     @staticmethod
@@ -126,6 +134,7 @@ class Dispatcher:
         else:
             raise Exception("Can't execute nonexistent instruction")
 
+
 class RTypeExecutions:
     @staticmethod
     def ADD(cpu: CPU, instructions: RTypeInstruction):
@@ -162,7 +171,7 @@ class RTypeExecutions:
 
         result = cpu.alu.or_(first_register_value, second_register_value)
         cpu.regs[instructions.rd].write(result)
- 
+
     @staticmethod
     def XOR(cpu: CPU, instructions: RTypeInstruction):
         first_register_value = cpu.regs[instructions.rs1].read()
@@ -263,7 +272,7 @@ class RTypeExecutions:
         first_register_value = cpu.regs[instructions.rs1].read()
         second_register_value = cpu.regs[instructions.rs2].read()
         remainder = cpu.alu.rem(first_register_value, second_register_value)
-        
+
         cpu.regs[instructions.rd].write(remainder)
 
     @staticmethod
@@ -271,16 +280,18 @@ class RTypeExecutions:
         first_register_value = cpu.regs[instructions.rs1].read()
         second_register_value = cpu.regs[instructions.rs2].read()
         reminder = cpu.alu.remu(first_register_value, second_register_value)
-        
+
         cpu.regs[instructions.rd].write(reminder)
 
     @staticmethod
     def RDPC(cpu: CPU, instructions: RTypeInstruction):
         cpu.regs[instructions.rd].write((cpu.pc.read() - 1) & 0xFFFF)
 
+
 def _sign_extend(value: int, width: int) -> int:
     mask = 1 << (width - 1)
     return (value ^ mask) - mask
+
 
 class ITypeExecutions:
     @staticmethod
@@ -292,17 +303,23 @@ class ITypeExecutions:
     @staticmethod
     def ANDI(cpu: CPU, instructions: ITypeInstruction):
         value = cpu.regs[instructions.rs1].read()
-        cpu.regs[instructions.rd].write(cpu.alu.and_(value, instructions.imm))  # zero-extended
+        cpu.regs[instructions.rd].write(
+            cpu.alu.and_(value, instructions.imm)
+        )  # zero-extended
 
     @staticmethod
     def ORI(cpu: CPU, instructions: ITypeInstruction):
         value = cpu.regs[instructions.rs1].read()
-        cpu.regs[instructions.rd].write(cpu.alu.or_(value, instructions.imm))  # zero-extended
+        cpu.regs[instructions.rd].write(
+            cpu.alu.or_(value, instructions.imm)
+        )  # zero-extended
 
     @staticmethod
     def XORI(cpu: CPU, instructions: ITypeInstruction):
         value = cpu.regs[instructions.rs1].read()
-        cpu.regs[instructions.rd].write(cpu.alu.xor_(value, instructions.imm))  # zero-extended
+        cpu.regs[instructions.rd].write(
+            cpu.alu.xor_(value, instructions.imm)
+        )  # zero-extended
 
     @staticmethod
     def SHLI(cpu: CPU, instructions: ITypeInstruction):
@@ -343,10 +360,12 @@ class ITypeExecutions:
         flags_list = cpu.alu.cmp_flags(value, imm)
         cpu.flags.set_list(flags_list)
 
+
 def _branch_if(cpu: CPU, instructions: BTypeInstruction, condition: bool):
     if condition:
         offset = _sign_extend(instructions.offset, 11)
         cpu.pc.set((cpu.pc.read() + offset) & 0xFFFF)
+
 
 class BTypeExecutions:
     @staticmethod
@@ -373,6 +392,7 @@ class BTypeExecutions:
     def BGEU(cpu: CPU, instructions: BTypeInstruction):
         _branch_if(cpu, instructions, cpu.flags.read_c())
 
+
 class JTypeExecutions:
     @staticmethod
     def JMP(cpu: CPU, instructions: JTypeInstruction):
@@ -387,7 +407,9 @@ class JTypeExecutions:
     @staticmethod
     def CALL(cpu: CPU, instructions: JTypeInstruction):
         cpu.sp.step()  # SP -= 1
-        cpu.memory.write(cpu.sp.read(), cpu.pc.read())  # push return address (already-incremented PC)
+        cpu.memory.write(
+            cpu.sp.read(), cpu.pc.read()
+        )  # push return address (already-incremented PC)
         offset = _sign_extend(instructions.offset, 10)
         cpu.pc.step_by(offset)
 
