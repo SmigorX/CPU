@@ -1,20 +1,24 @@
 # Format
+
 | Class bits | Format | Layout (MSB→LSB, 16 bits total) |
-|---|---|---|
+| --- | --- | --- |
 | `00` | R-type | `class(2)` `subop(5)` `rd(3)` `rs1(3)` `rs2(3)` |
 | `01` | I-type | `class(2)` `subop(4)` `rd(3)` `rs1(3)` `imm(4)` |
-| `10` | B-type | `class(2)` `subop(4)` `cc(3)` `offset(7)` |
+| `10` | B-type | `class(2)` `subop(3)` `offset(11)` |
 | `11` | J-type | `class(2)` `subop(4)` `offset(10)` |
 
-`LOAD`/`STORE` sub-format (overrides the standard I-type layout above): `class(2)` `subop(4)` `rd(3)` `rs1(1)` `imm(6)` — `rs1` narrowed to 1 bit (`R6` or `R7` only, the two conventional address registers), freeing 2 bits to widen `imm` to 6 bits (−32..31 instead of −8..7).
+`LOAD`/`STORE` sub-format (overrides the standard I-type layout above): `class(2)` `subop(4)` `rd(3)` `rs1(1)` `imm(6)` — `rs1` narrowed to 1 bit (`R6` or `R7` only, the two conventional address registers), freeing 2 bits to widen `imm` to 6 bits (−32..31 instead of −8..7). **Bit mapping: `0 = R6`, `1 = R7`.**
+
+`JMPA`/`CALLA` sub-format (overrides the standard J-type layout above): the 10-bit `offset` field is reinterpreted as a register operand — `rs1` occupies the low 3 bits (bits 2-0), the upper 7 bits are unused.
 
 # Draft
+
 ### R-type (`class = 00`) Register instructions
 
 Only `CMP` writes to `FLAGS` in this table — no other instruction does, despite computing a result.
 
 | subop | Mnemonic | Operands | Semantics |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 00000 | `ADD` | rd, rs1, rs2 | rd = rs1 + rs2 |
 | 00001 | `SUB` | rd, rs1, rs2 | rd = rs1 − rs2 |
 | 00010 | `AND` | rd, rs1, rs2 | rd = rs1 & rs2 |
@@ -43,7 +47,7 @@ Only `CMP` writes to `FLAGS` in this table — no other instruction does, despit
 Only `CMPI` writes to `FLAGS` in this table — `ADDI`/`ANDI`/`ORI`/`XORI`/`SHLI`/`SHRI`/`SHRIU`/`LOAD`/`STORE` do not.
 
 | subop | Mnemonic | Operands | Semantics |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 0000 | `ADDI` | rd, rs1, imm | rd = rs1 + imm |
 | 0001 | `ANDI` | rd, rs1, imm | rd = rs1 & imm |
 | 0010 | `ORI` | rd, rs1, imm | rd = rs1 \| imm |
@@ -57,13 +61,14 @@ Only `CMPI` writes to `FLAGS` in this table — `ADDI`/`ANDI`/`ORI`/`XORI`/`SHLI
 | others | — | | reserved |
 
 ### B-type (`class = 10`) — conditional branch, `PC += offset` if condition true
- - Z - result is 0
- - N - result is <0
- - C - carry bit
- - V - overflow into sign bit for signed values
 
-| subop (cc) | Mnemonic | Operands | Condition | Relation (rs1 vs rs2, from the preceding `CMP`/`CMPI`) | Semantics |
-|---|---|---|---|---|---|
+- Z - result is 0
+- N - result is <0
+- C - carry bit
+- V - overflow into sign bit for signed values
+
+| subop | Mnemonic | Operands | Condition | Relation (rs1 vs rs2, from the preceding `CMP`/`CMPI`) | Semantics |
+| --- | --- | --- | --- | --- | --- |
 | 000 | `BEQ` | offset | Z == 1 | rs1 == rs2 | if Z == 1: PC += offset |
 | 001 | `BNE` | offset | Z == 0 | rs1 ≠ rs2 | if Z == 0: PC += offset |
 | 010 | `BLT` | offset | N != V | rs1 < rs2 (signed) | if N != V: PC += offset |
@@ -73,8 +78,11 @@ Only `CMPI` writes to `FLAGS` in this table — `ADDI`/`ANDI`/`ORI`/`XORI`/`SHLI
 | others | — | | | | reserved |
 
 ### J-type (`class = 11`) — unconditional, `offset` used as PC-relative target
+
+`JMPA`/`CALLA` reinterpret the 10-bit `offset` field as a register operand instead: `rs1` occupies the low 3 bits (bits 2-0), the upper 7 bits are unused.
+
 | subop | Mnemonic | Operands | Semantics |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 0000 | `JMP` | offset | PC += offset |
 | 0001 | `JMPA` | rs1 | PC = rs1 |
 | 0010 | `CALL` | offset | SP -= 1; mem[SP] = PC+1; PC += offset |
