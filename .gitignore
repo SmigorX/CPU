@@ -2,3 +2,7 @@ __pycache__
 *.py[codz]
 $py.class
 .vscode
+.venv
+venv
+.direnv
+program.bingus
