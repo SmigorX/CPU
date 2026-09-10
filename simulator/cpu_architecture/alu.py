@@ -43,14 +43,15 @@ class ALU:
 
     @staticmethod
     def shl(a: int, shamt: int) -> int:
-        return (a << shamt) & 0xFFFF
+        return (a << (shamt & 0xF)) & 0xFFFF
 
     @staticmethod
     def shru(a: int, shamt: int) -> int:
-        return a >> shamt
+        return a >> (shamt & 0xF)
 
     @staticmethod
     def shr(a: int, shamt: int) -> int:
+        shamt &= 0xF
         if shamt == 0:
             return a
         shifted = a >> shamt
@@ -67,13 +68,29 @@ class ALU:
         return ALU._divmod_signed(a, b)[0]
 
     @staticmethod
-    def rem(a: int, b: int) -> int:
-        return ALU._divmod_signed(a, b)[1]
-
-    @staticmethod
     def divu(a: int, b: int) -> int:
         return a // b
 
     @staticmethod
+    def rem(a: int, b: int) -> int:
+        return ALU._divmod_signed(a, b)[1]
+
+    @staticmethod
     def remu(a: int, b: int) -> int:
         return a % b
+
+    @staticmethod
+    def and_(a: int, b: int) -> int:
+        return (a & b) & 0xFFFF
+
+    @staticmethod
+    def or_(a: int, b: int) -> int:
+        return (a | b) & 0xFFFF
+
+    @staticmethod
+    def xor_(a: int, b: int) -> int:
+        return (a ^ b) & 0xFFFF
+
+    @staticmethod
+    def not_(a: int) -> int:
+        return (~a) & 0xFFFF

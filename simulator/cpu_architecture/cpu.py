@@ -1,5 +1,8 @@
 from cpu_architecture.register import cpu_register, flags_register, program_counter, stack_pointer
 from cpu_architecture.memory import memory
+from cpu_architecture.alu import ALU
+from execution.execute import Dispatcher
+
 
 class CPU():
     def __init__(self):
@@ -8,10 +11,17 @@ class CPU():
         self.pc = program_counter()
         self.sp = stack_pointer()
         self.memory = memory()
+        self.alu = ALU
+        self.dispatcher = Dispatcher
 
-    def start(self, program: list[int], entry: int = 0x0000):
-        self.memory.load_program(program, entry)
-        self.pc.set(entry)
+    def start(self, program: list[int], program_entry: int = 0x0000, stack_start: int = 0xFFFB):
+        self.memory.load_program(program, program_entry)
+        self.pc.set(program_entry)
+        self.sp.set(stack_start)
 
-
+    def step(self):
+        instr_addr = self.pc.read()
+        raw = self.memory.read(instr_addr)
+        self.pc.step()
+        self.dispatcher.execute_instruction(self, raw)
 
